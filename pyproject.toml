@@ -1,0 +1,14 @@
+[project]
+name = "learn-langchain"
+version = "0.1.0"
+description = "LangChain/LangGraph learning examples"
+authors = [{name = "zheng jie"}]
+requires-python = ">=3.9"
+
+# 你实际需要的依赖写这里
+dependencies = [
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
