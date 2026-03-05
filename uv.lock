@@ -549,6 +549,20 @@ wheels = [
 ]
 
 [[package]]
+name = "langchain-openai"
+version = "1.1.10"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "langchain-core" },
+    { name = "openai" },
+    { name = "tiktoken" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d6/0f/01147f842499338ae3b0dd0a351fb83006d9ed623cf3a999bd68ba5bbe2d/langchain_openai-1.1.10.tar.gz", hash = "sha256:ca6fae7cf19425acc81814efed59c7d205ec9a1f284fd1d08aae9bda85d6501b", size = 1059755, upload-time = "2026-02-17T18:03:44.506Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/94/46/77846a98913e444d0d564070a9056bd999daada52bd099dc1e8812272810/langchain_core-1.2.9-py3-none-any.whl", hash = "sha256:7e5ecba5ed7a65852e8d5288e9ceeba05340fa9baf32baf672818b497bbaea8f", size = 496296, upload-time = "2026-02-05T14:21:42.816Z" },
+]
+
+[[package]]
 name = "langgraph"
 version = "1.0.8"
 source = { registry = "https://pypi.org/simple" }
@@ -630,7 +644,6 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "ipykernel" },
-    { name = "langchain" },
     { name = "langgraph" },
     { name = "openai" },
     { name = "python-dotenv" },
@@ -639,7 +652,6 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "ipykernel", specifier = ">=7.2.0" },
-    { name = "langchain", specifier = ">=1.2.10" },
     { name = "langgraph", specifier = ">=1.0.8" },
     { name = "openai", specifier = ">=2.17.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
