@@ -12,4 +12,5 @@ dependencies = [
     "langgraph>=1.0.8",
     "openai>=2.17.0",
     "python-dotenv>=1.2.1",
+    "skills-ref>=0.1.1",
 ]
