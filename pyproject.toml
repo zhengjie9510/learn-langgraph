@@ -16,4 +16,6 @@ dependencies = [
     "langchain-community>=0.4.1",
     "langchain-experimental>=0.4.1",
     "deepagents>=0.5.3",
+    "dashscope>=1.25.17",
+    "langmem>=0.0.30",
 ]
