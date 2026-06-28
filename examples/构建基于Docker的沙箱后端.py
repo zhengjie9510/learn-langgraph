@@ -55,15 +55,15 @@ class DockerSandbox(BaseSandbox):
     """
 
     def __init__(
-        self,
-        image: str = DEFAULT_IMAGE,
-        container_name: str | None = None,
-        volumes: dict[str, dict[str, str]] | None = None,
-        working_dir: str = DEFAULT_WORKING_DIR,
-        auto_remove: bool = True,
-        execute_timeout: int = DEFAULT_EXECUTE_TIMEOUT,
-        max_output_bytes: int = DEFAULT_MAX_OUTPUT_BYTES,
-        docker_client_kwargs: dict[str, Any] | None = None,
+            self,
+            image: str = DEFAULT_IMAGE,
+            container_name: str | None = None,
+            volumes: dict[str, dict[str, str]] | None = None,
+            working_dir: str = DEFAULT_WORKING_DIR,
+            auto_remove: bool = True,
+            execute_timeout: int = DEFAULT_EXECUTE_TIMEOUT,
+            max_output_bytes: int = DEFAULT_MAX_OUTPUT_BYTES,
+            docker_client_kwargs: dict[str, Any] | None = None,
     ) -> None:
         """初始化 Docker 沙箱。
 
@@ -130,10 +130,10 @@ class DockerSandbox(BaseSandbox):
         return self._container
 
     def execute(
-        self,
-        command: str,
-        *,
-        timeout: int | None = None,
+            self,
+            command: str,
+            *,
+            timeout: int | None = None,
     ) -> ExecuteResponse:
         """在容器内执行 shell 命令。
 
@@ -354,15 +354,6 @@ class DockerSandbox(BaseSandbox):
         """Context manager 出口，自动关闭容器。"""
         self.close()
 
-    def __del__(self) -> None:
-        """析构函数，尝试清理容器。"""
-        try:
-            self.close()
-        except Exception:
-            pass
-
-
-# ============ 测试代码 ============
 
 if __name__ == "__main__":
     print("=" * 60)
