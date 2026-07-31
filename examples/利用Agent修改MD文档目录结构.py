@@ -78,19 +78,16 @@ class AgentState(BaseModel):
 
 
 def editor_node(state: AgentState) -> dict:
-    """调用编辑 Agent，正确处理消息历史切片"""
-    print(f"✏️ [Editor] 正在进行第 {state.attempts + 1} 次修改...")
+    print(f"\n✏️ Editor 第 {state.attempts + 1} 次修改")
 
-    result = edit_agent.invoke({"messages": state.messages})
-
-    input_message_count = len(state.messages)
-    new_messages = result["messages"][input_message_count:]
-
-    if not new_messages:
-        new_messages = [result["messages"][-1]]
+    for event in edit_agent.stream(
+        {"messages": state.messages},
+        stream_mode="values",
+    ):
+        event["messages"][-1].pretty_print()
 
     return {
-        "messages": new_messages,
+        "messages": event["messages"],
         "attempts": state.attempts + 1,
     }
 
