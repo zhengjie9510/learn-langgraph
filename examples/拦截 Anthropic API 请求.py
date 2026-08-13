@@ -1,4 +1,4 @@
-"""Claude Code 请求拦截器 - 用于观察 Cloud Code 发送的 API 请求内容。
+"""拦截 Anthropic API 请求 - 用于观察 Claude Code 发送的 API 请求内容。
 
 启动服务后，将 Claude Code 的 API 端点指向 http://127.0.0.1:8000，
 请求内容会同时输出到控制台和写入 requests.jsonl 文件。
@@ -15,7 +15,7 @@ app = FastAPI()
 
 @app.post("/{full_path:path}")
 async def catch_all(full_path: str, request: Request):
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"[请求] POST /{full_path}")
 
     # 打印关键的请求头
@@ -37,7 +37,7 @@ async def catch_all(full_path: str, request: Request):
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
     print(f"  [日志] 已写入 {filename}")
 
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # 返回模拟的 SSE 流式响应，让 Claude Code 正常运行
     async def fake_stream():
