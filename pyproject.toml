@@ -19,4 +19,6 @@ dependencies = [
     "dashscope>=1.25.17",
     "langmem>=0.0.30",
     "langchain-docker-backend>=1.0.0",
+    "fastapi>=0.141.1",
+    "uvicorn>=0.52.3",
 ]
