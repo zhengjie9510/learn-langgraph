@@ -15,7 +15,7 @@ load_dotenv()
 
 model = ChatOpenAI(
     model="deepseek-v4-flash",
-    # model_kwargs={"extra_body": {"thinking": {"type": "disabled"}}},
+    model_kwargs={"extra_body": {"thinking": {"type": "disabled"}}},
     temperature=0.2,
 )
 
@@ -42,7 +42,6 @@ EDITOR_SYSTEM_PROMPT = """\
 
 注意：如果你收到了 Auditor（审计员）的反馈，请严格按照其指出的具体行号和问题进行针对性修复。
 """
-
 
 editor_agent = create_agent(
     model,
@@ -167,36 +166,16 @@ def main(md_file: str) -> None:
     print(f"📄 目标文件：{md_file}\n")
 
     try:
-        # 注意:不能加 subgraphs=True——加上后每个事件会被包装成 (namespace, payload) 元组,
-        # 而不是 {node_name: payload} dict,且 editor 是子图节点,顶层事件已包含其全部 messages。
-        for update in workflow.stream(
-            {"messages": [HumanMessage(content=f"请检查并修正 Markdown 文件 `{md_file}` 的标题层级结构。")]},
-            stream_mode="updates",
+        for chunk in workflow.stream(
+                {"messages": [HumanMessage(content=f"请检查并修正 Markdown 文件 `{md_file}` 的标题层级结构。")]},
+                stream_mode="values",
+                version="v2",
+                subgraphs=True
         ):
-            for node_name, payload in update.items():
-                print(f"\n🔄 节点 [{node_name}] 完成：")
-
-                if node_name == "editor":
-                    for msg in payload.get("messages", []):
-                        kind = type(msg).__name__
-                        if getattr(msg, "tool_calls", None):
-                            tools = [tc["name"] for tc in msg.tool_calls]
-                            print(f"  🛠️ {kind}：调用工具 {tools}")
-                        if msg.content:
-                            text = msg.content if isinstance(msg.content, str) else str(msg.content)
-                            print(f"  💬 {kind}：{text[:200]}{'…' if len(text) > 200 else ''}")
-
-                elif node_name == "auditor":
-                    status = "✅ 审计通过" if payload["is_valid"] else "❌ 审计未通过"
-                    print(f"  {status}（第 {payload['attempts']} 次修改）")
-                    feedback = payload["audit_feedback"]
-                    print(f"  📋 审计反馈：{feedback[:300]}{'…' if len(feedback) > 300 else ''}")
-                    if payload["is_valid"]:
-                        print("  ➡️ 下一步：结束")
-                    elif payload["attempts"] >= 3:
-                        print("  ➡️ 下一步：失败 → 抛异常")
-                    else:
-                        print("  ➡️ 下一步：回到 Editor 继续修改")
+            ns = chunk.get("ns") or ()
+            print(ns[0].split(":")[0] if ns else "root")
+            message = chunk["data"].messages[-1]  # data 是 AgentState(pydantic)，不是 dict
+            message.pretty_print()
 
     except RuntimeError as e:
         print(f"\n💥 流程终止：{e}")
