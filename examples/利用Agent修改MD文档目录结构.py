@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI
 from langchain.agents import create_agent
+from langchain.agents.middleware import FilesystemFileSearchMiddleware
 from langchain_core.messages import HumanMessage, BaseMessage
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
@@ -13,6 +14,8 @@ from deepagents.middleware.filesystem import FilesystemMiddleware
 
 load_dotenv()
 
+DATA_DIR = "../examples-data"
+
 model = ChatOpenAI(
     model="deepseek-v4-flash",
     model_kwargs={"extra_body": {"thinking": {"type": "disabled"}}},
@@ -20,27 +23,33 @@ model = ChatOpenAI(
 )
 
 backend = FilesystemBackend(
-    root_dir="../examples-data",
+    root_dir=DATA_DIR,
     virtual_mode=True,
 )
+
+SEARCH_MIDDLEWARE = FilesystemFileSearchMiddleware(
+    root_path=str(DATA_DIR),
+    use_ripgrep=True,
+)
+FS_TOOLS = ["ls", "read_file", "edit_file"]
 
 EDITOR_SYSTEM_PROMPT = """
 你是 Markdown 文档目录结构整理专家。修改文件只能用 Edit 工具。
 
 ## 工具说明
 
-* Grep 仅支持字面量匹配，不支持正则表达式。
-* **提取 Markdown 标题时，Grep 的 pattern 固定使用 `# `。**
-* 禁止使用 `^#`、`^##`、`^#{1,6}`、`.*#` 等任何正则形式。
-* 正确示例：`Grep(pattern="# ", path=目标文件, output_mode="content")`
-* 如果没有匹配结果，也不要改用正则；应先确认文件路径是否正确。
+* grep_search 支持正则表达式（基于 ripgrep）。
+* **提取 Markdown 标题时，grep_search 的 pattern 固定使用 `^#{1,6} `**（匹配以 1~6 个 `#` 加空格开头的标题行）。
+* 正确示例：`grep_search(pattern="^#{1,6} ", path="/layout-parser-paper.md", output_mode="content")`
+* 返回格式为 `path:行号:内容`，行号即标题所在行。
+* 如果没有匹配结果，应先确认文件路径是否正确。
 
 ## 工作流程
 
-1. **提取标题**：使用 Grep，并固定以 `# ` 作为 pattern，提取包含 Markdown 标题的候选行及行号。文件可能很大，不要一次性读取全文。
+1. **提取标题**：使用 grep_search，pattern 固定 `^#{1,6} `，提取 Markdown 标题行及行号。文件可能很大，不要一次性读取全文。
 2. **判断结构**：检查文件开头是否存在 TOC。存在可靠 TOC 时优先参考 TOC；没有 TOC 或 TOC 不完整时，根据标题编号、上下文和全文标题规律判断正确层级。
 3. **逐项修改**：用 Edit 逐处修正，**只改标题行本身**，不要修改正文内容。
-4. **复核**：修改完成后再次使用 Grep，并固定以 `# ` 作为 pattern，检查标题结构是否合理且一致。
+4. **复核**：修改完成后再次使用 grep_search（pattern 固定 `^#{1,6} `）检查标题结构是否合理且一致。
 
 ## 修改规则
 
@@ -61,7 +70,10 @@ EDITOR_SYSTEM_PROMPT = """
 editor_agent = create_agent(
     model,
     system_prompt=EDITOR_SYSTEM_PROMPT,
-    middleware=[FilesystemMiddleware(backend=backend)],
+    middleware=[
+        FilesystemMiddleware(backend=backend, tools=FS_TOOLS),
+        SEARCH_MIDDLEWARE,
+    ],
 )
 
 AUDITOR_SYSTEM_PROMPT = """\
@@ -72,16 +84,16 @@ AUDITOR_SYSTEM_PROMPT = """\
 
 ## 工具说明
 
-* Grep 仅支持字面量匹配，不支持正则表达式。
-* **提取 Markdown 标题时，Grep 的 pattern 固定使用 `# `。**
-* 禁止使用 `^#`、`^##`、`^#{1,6}`、`.*#` 等任何正则形式。
-* 正确示例：`Grep(pattern="# ", path=目标文件, output_mode="content")`
-* 如果没有匹配结果，也不要改用正则；应先确认文件路径是否正确。
+* grep_search 支持正则表达式（基于 ripgrep）。
+* **提取 Markdown 标题时，grep_search 的 pattern 固定使用 `^#{1,6} `**（匹配以 1~6 个 `#` 加空格开头的标题行）。
+* 正确示例：`grep_search(pattern="^#{1,6} ", path="/layout-parser-paper.md", output_mode="content")`
+* 返回格式为 `path:行号:内容`，行号即标题所在行。
+* 如果没有匹配结果，应先确认文件路径是否正确。
 
 ## 工作流程
 
 1. 从当前 message 中确定目标 Markdown 文件。
-2. 使用 Grep 提取所有 Markdown 标题及行号。
+2. 使用 grep_search（pattern 固定 `^#{1,6} `）提取所有 Markdown 标题及行号。
 3. 检查标题结构是否合理、一致，并能够稳定按照一级标题 `# ` 拆分章节。
 
 ## 检查规则
@@ -107,7 +119,10 @@ AUDITOR_SYSTEM_PROMPT = """\
 auditor_agent = create_agent(
     model,
     system_prompt=AUDITOR_SYSTEM_PROMPT,
-    middleware=[FilesystemMiddleware(backend=backend)],
+    middleware=[
+        FilesystemMiddleware(backend=backend, tools=FS_TOOLS),
+        SEARCH_MIDDLEWARE,
+    ],
 )
 
 
